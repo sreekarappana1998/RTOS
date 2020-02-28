@@ -11,7 +11,7 @@
 #include <time.h>
 #include <pthread.h>
 
-#define MAX 5
+#define MAX 105
 int connfd[MAX] = {0};
 int i, e[MAX] = {0};
 pthread_t tid2;
@@ -35,12 +35,6 @@ void *read_msg(void *arg)
 	printf("%c says: %s\n",str[99],str);
     pthread_create(&tid[k],NULL,read_msg,(void *)&k);;
 	return (NULL);
-	
-	clock_t t2; 
-    t2 = clock(); 
-    double time_taken2 = ((double)t2)/CLOCKS_PER_SEC; // in seconds 
-  
-    printf("took %f seconds to execute2 \n", time_taken2); 
 }
 void *write_msg(void *arg)
 {
@@ -55,16 +49,10 @@ void *write_msg(void *arg)
         exit(0);
     pthread_create(&tid2,NULL,write_msg,NULL);
 	return (NULL);
-	
-	clock_t t1; 
-    t1 = clock(); 
-    double time_taken1 = ((double)t1)/CLOCKS_PER_SEC; // in seconds 
-  
-    printf("took %f seconds to execute1 \n", time_taken1); 
 }
 int main(int argc, char *argv[])
 {
-    int listenfd = 0;
+    int listenfd = 0, opt=1;
     struct sockaddr_in serv_addr;
     char sendBuff[1025];
 	int temp;
@@ -76,13 +64,33 @@ int main(int argc, char *argv[])
     memset(&serv_addr, '0', sizeof(serv_addr));
     memset(sendBuff, '0', sizeof(sendBuff)); 
 	
+	if (setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, 
+                                                  &opt, sizeof(opt))) 
+    { 
+        perror("setsockopt"); 
+        exit(EXIT_FAILURE); 
+    }
+     
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
     serv_addr.sin_port = htons(5000); 
 	
-    bind(listenfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)); 
+    
+    if (bind(listenfd, (struct sockaddr *)&serv_addr,  
+                                 sizeof(serv_addr))<0) 
+    { 
+        perror("bind failed"); 
+        exit(EXIT_FAILURE); 
+    } 
+    if (listen(listenfd, 3) < 0) 
+    { 
+        perror("listen"); 
+        exit(EXIT_FAILURE); 
+    } 
 	
-    listen(listenfd, 10);
+	//bind(listenfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)); 
+	
+    //listen(listenfd, 10);
     
     for (i = 0; i < MAX; ++i)
     {
