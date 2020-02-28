@@ -69,6 +69,7 @@ int main(int argc, char *argv[])
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_port = htons(5000); 
 	printf("Server address used is: %s\n", argv[1]);
+	
     if(inet_pton(AF_INET, argv[1], &serv_addr.sin_addr)<=0)
     {
         printf("\n inet_pton error occured\n");
@@ -80,6 +81,7 @@ int main(int argc, char *argv[])
 		printf("\n Error : Connect Failed \n");
 		return 1;
     }
+    printf("online\n");
     read(sockfd, id, 5);
     printf("My ID : %c\n", id[0]);
     pthread_create(&tid1,NULL,read_msg,NULL);
