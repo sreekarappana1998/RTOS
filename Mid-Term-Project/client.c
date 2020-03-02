@@ -42,7 +42,7 @@ static ssize_t loop_write(int fd, const void*data, size_t size) {
 }
 
 
-void func(int s) 
+void func(int s,int argc, char*argv[]) 
 { 
 	//char buff[MAX]; 
 	int n; 
@@ -118,10 +118,4 @@ int main()
 	} 
 	else
 		printf("connected to the server..\n"); 
-
-	// function for chat 
-	func(s); 
-
-	// close the socket 
-	close(s); 
 } 
