@@ -20,7 +20,6 @@
 
 int main(int argc, char *argv[]){
 	
-    // The sample type to use
 	static const pa_sample_spec ss = {
         .format = PA_SAMPLE_S16LE,
         .rate = 44100,
@@ -30,9 +29,6 @@ int main(int argc, char *argv[]){
     pa_simple *s = NULL;
 	int ret = 1;
 	int error;
-
-    // Create the recording stream 
-    	
 
 	int client_socket;
 	struct sockaddr_in address_serv;
@@ -53,7 +49,7 @@ int main(int argc, char *argv[]){
 
 	printf("\nWaiting for connection\n");
     	if((connect(client_socket, (struct sockaddr *)&address_serv, sizeof(address_serv))) < 0){
-    		perror("failed connection...");
+    		perror("failed connection");
     		exit(1);
     	}
     	printf("\nConnection established\n\n");
@@ -63,18 +59,15 @@ int main(int argc, char *argv[]){
         	goto finish;
     	}
 
-    // Sending recorded data
     	while(1){
 		uint8_t buff[BUFSIZE];
 		
-		/* Record some data ... */
 		if (pa_simple_read(s, buff, sizeof(buff), &error) < 0) {
 		    fprintf(stderr, __FILE__": pa_simple_read() failed: %s\n", pa_strerror(error));
 		    goto finish;
 		}
                 else{
                   
-                  //pa_simple_write(s, buff, sizeof(buff), &error);
                    send(client_socket, buff , sizeof(buff) , 0 ); 
                     }
     }
