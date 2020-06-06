@@ -24,7 +24,6 @@
 int main(int argc, char const *argv[])
 {
 
-    // The sample type to use
     static const pa_sample_spec ss = {
         .format = PA_SAMPLE_S16LE,
         .rate = 44100,
@@ -39,13 +38,13 @@ int main(int argc, char const *argv[])
         fprintf(stderr, __FILE__": pa_simple_new() failed: %s\n", pa_strerror(error));
         goto finish;
 	} 
-    // Server parameters
+
     int serv_socket, new_socket;
     struct sockaddr_in address_serv, client_serv;
     int addrlen = sizeof(address_serv);
  
     if((serv_socket = socket(AF_INET, SOCK_STREAM, 0)) < 0){
-        perror("Socket  creation Error");
+        perror("Socket Error");
         exit(1);
     }
     
@@ -60,7 +59,6 @@ int main(int argc, char const *argv[])
         exit(1);
     }
 
-    // Listening to clients
     printf("\nlistening\n");
     if(listen(serv_socket, 50) < 0){
         perror("Listen error");
@@ -75,9 +73,7 @@ int main(int argc, char const *argv[])
                 ssize_t r;
              
                 int val = read(new_socket, buff, sizeof(buff));
-	        //printf("Read%d\n", val);
              
-                // Playing the recorded message
                 if (pa_simple_write(s, buff, sizeof(buff), &error) < 0) {
                     fprintf(stderr, __FILE__": pa_simple_write() failed: %s\n", pa_strerror(error));
                 }
