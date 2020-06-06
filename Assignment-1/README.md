@@ -21,7 +21,10 @@
   ```
   python time_run.py
   ```
-  
+  To find out the performance measurements when all the users are sending messeges simultaneously run the following command
+  ```
+  python parallel.py
+  ```
 ## Results
   
   Results obtained when only one person is sending the messege;
@@ -37,3 +40,18 @@
  | 7. |      70       |   60.35ms  |
  | 8. |      80       |   65.4ms   |
  | 9. |      90       |   86.89ms  |
+ 
+ 
+  Results obtained when all the users are sending the messege simultaneously;
+
+ | No | No of Clients | Time taken |
+ | -- | ------------- | ---------- |
+ | 1. |      10       |   50.7ms   |   
+ | 2. |      20       |   51.05ms  |
+ | 3. |      30       |   51.57ms  |
+ | 4. |      40       |   52.49ms   |
+ | 5. |      50       |   74.19ms  |
+ | 6. |      60       |   58.9ms  |
+ | 7. |      70       |   90.35ms  |
+ | 8. |      80       |   58.4ms   |
+ | 9. |      90       |   56.89ms  |
