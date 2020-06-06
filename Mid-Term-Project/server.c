@@ -1,94 +1,95 @@
-#include <stdio.h> 
-#include <netdb.h> 
-#include <netinet/in.h> 
-#include <stdlib.h> 
-#include <string.h> 
-#include <sys/socket.h> 
-#include <sys/types.h> 
-#define MAX 80 
-#define PORT 8080 
-#define SA struct sockaddr 
+#include<sys/types.h>
+#include<sys/socket.h>
+#include <netinet/in.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <errno.h>
+#include <stdlib.h>
+#include "pthread.h"
+#include <stddef.h>
+#include <pulse/simple.h>
+#include <pulse/error.h>
 
-// Function designed for chat between client and server. 
-void func(int sockfd) 
-{ 
-	char buff[MAX]; 
-	int n; 
-	// infinite loop for chat 
-	for (;;) { 
-		bzero(buff, MAX); 
+#define buffSIZE 1024
+#define length 1024
 
-		// read the message from client and copy it in buffer 
-		read(sockfd, buff, sizeof(buff)); 
-		// print buffer which contains the client contents 
-		printf("From client: %s\t To client : ", buff); 
-		bzero(buff, MAX); 
-		n = 0; 
-		// copy server message in the buffer 
-		while ((buff[n++] = getchar()) != '\n') 
-			; 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
-		// and send that buffer to client 
-		write(sockfd, buff, sizeof(buff)); 
+int main(int argc, char const *argv[])
+{
 
-		// if msg contains "Exit" then server exit and chat ended. 
-		if (strncmp("exit", buff, 4) == 0) { 
-			printf("Server Exit...\n"); 
-			break; 
-		} 
+    // The sample type to use
+    static const pa_sample_spec ss = {
+        .format = PA_SAMPLE_S16LE,
+        .rate = 44100,
+        .channels = 2
+    };
+
+    pa_simple *s = NULL;
+    int ret = 1;
+    int error;
+    
+    if (!(s = pa_simple_new(NULL,argv[0], PA_STREAM_PLAYBACK, NULL, "playback", &ss, NULL, NULL, &error))) {
+        fprintf(stderr, __FILE__": pa_simple_new() failed: %s\n", pa_strerror(error));
+        goto finish;
 	} 
-} 
+    // Server parameters
+    int serv_socket, new_socket;
+    struct sockaddr_in address_serv, client_serv;
+    int addrlen = sizeof(address_serv);
+ 
+    if((serv_socket = socket(AF_INET, SOCK_STREAM, 0)) < 0){
+        perror("Socket  creation Error");
+        exit(1);
+    }
+    
+    memset(&address_serv, '\0', sizeof(address_serv));  
+    address_serv.sin_family = AF_INET;
+    address_serv.sin_addr.s_addr = INADDR_ANY;
+    address_serv.sin_port = htons(9090);
+    
+    printf("\nBinding\n");  
+    if((bind(serv_socket, (struct sockaddr *)&address_serv,sizeof(address_serv))) < 0){
+        perror("Bind error");
+        exit(1);
+    }
 
-// Driver function 
-int main() 
-{ 
-	int sockfd, connfd, len; 
-	struct sockaddr_in servaddr, cli; 
+    // Listening to clients
+    printf("\nlistening\n");
+    if(listen(serv_socket, 50) < 0){
+        perror("Listen error");
+        exit(1);
+    }
 
-	// socket create and verification 
-	sockfd = socket(AF_INET, SOCK_STREAM, 0); 
-	if (sockfd == -1) { 
-		printf("socket creation failed...\n"); 
-		exit(0); 
-	} 
-	else
-		printf("Socket successfully created..\n"); 
-	bzero(&servaddr, sizeof(servaddr)); 
+    printf("\nWaiting for connection\n");
+    while(1){
+        if((new_socket = accept(serv_socket, (struct sockaddr *)&address_serv, (socklen_t*)&addrlen)) >= 0){
+            while(1){
+                uint8_t buff[buffSIZE];
+                ssize_t r;
+             
+                int val = read(new_socket, buff, sizeof(buff));
+	        //printf("Read%d\n", val);
+             
+                // Playing the recorded message
+                if (pa_simple_write(s, buff, sizeof(buff), &error) < 0) {
+                    fprintf(stderr, __FILE__": pa_simple_write() failed: %s\n", pa_strerror(error));
+                }
+            }
+        
+        }    
+    }
+    ret = 0;
+finish:
 
-	// assign IP, PORT 
-	servaddr.sin_family = AF_INET; 
-	servaddr.sin_addr.s_addr = htonl(INADDR_ANY); 
-	servaddr.sin_port = htons(PORT); 
+    if (s)
+        pa_simple_free(s);
 
-	// Binding newly created socket to given IP and verification 
-	if ((bind(sockfd, (SA*)&servaddr, sizeof(servaddr))) != 0) { 
-		printf("socket bind failed...\n"); 
-		exit(0); 
-	} 
-	else
-		printf("Socket successfully binded..\n"); 
-
-	// Now server is ready to listen and verification 
-	if ((listen(sockfd, 5)) != 0) { 
-		printf("Listen failed...\n"); 
-		exit(0); 
-	} 
-	else
-		printf("Server listening..\n"); 
-	len = sizeof(cli); 
-
-	// Accept the data packet from client and verification 
-	connfd = accept(sockfd, (SA*)&cli, &len); 
-	if (connfd < 0) { 
-		printf("server acccept failed...\n"); 
-		exit(0); 
-	} 
-	else
-		printf("server acccept the client...\n"); 
-
-	// Function for chatting between client and server 
-	func(connfd); 
-
-	// After chatting close the socket 
-	close(sockfd); 
-} 
+    return ret;
+}
